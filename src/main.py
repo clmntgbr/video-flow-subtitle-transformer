@@ -44,9 +44,6 @@ def process_message(message):
         tmpSrtFilePath = f"/tmp/{uuid}.srt"
         tmpAssFilePath = f"/tmp/{uuid}.ass"
 
-        print(tmpAssFilePath)
-        print(tmpSrtFilePath)
-
         if not s3_client.download_file(key, tmpSrtFilePath):
             raise Exception
         
