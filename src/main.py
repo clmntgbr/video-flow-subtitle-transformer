@@ -9,7 +9,7 @@ from src.s3_client import S3Client
 from src.rabbitmq_client import RabbitMQClient
 from src.file_client import FileClient
 from src.converter import ProtobufConverter
-from src.Protobuf.Message_pb2 import ApiToSubtitleTransformer, PresetSubtitleFont, Preset, MediaPodStatus
+from src.Protobuf.Message_pb2 import ApiToSubtitleTransformer, PresetSubtitleFont, Preset, MediaPodStatus, MediaPod
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -36,8 +36,11 @@ celery.conf.update({
 
 @celery.task(name='tasks.process_message', queue=app.config['RMQ_QUEUE_READ'])
 def process_message(message):
-    protobuf: ApiToSubtitleTransformer = ProtobufConverter.json_to_protobuf(message)
-
+    mediaPod: MediaPod = ProtobufConverter.json_to_protobuf(message)
+    protobuf = ApiToSubtitleTransformer()
+    protobuf.mediaPod.CopyFrom(mediaPod)
+    protobuf.IsInitialized()
+    
     try:
         key = f"{protobuf.mediaPod.userUuid}/{protobuf.mediaPod.uuid}/{protobuf.mediaPod.originalVideo.subtitle}"
         uuid = os.path.splitext(protobuf.mediaPod.originalVideo.subtitle)[0]
