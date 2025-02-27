@@ -9,7 +9,7 @@ from src.s3_client import S3Client
 from src.rabbitmq_client import RabbitMQClient
 from src.file_client import FileClient
 from src.converter import ProtobufConverter
-from src.Protobuf.Message_pb2 import ApiToSubtitleTransformer, PresetSubtitleFont, Preset, MediaPodStatus, MediaPod
+from src.Protobuf.Message_pb2 import ApiToSubtitleTransformer, ConfigurationSubtitleFont, Configuration, MediaPodStatus, MediaPod
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -51,7 +51,7 @@ def process_message(message):
             raise Exception
         
         with open(tmpSrtFilePath, "r", encoding="utf-8") as srt_file, open(tmpAssFilePath, "w", encoding="utf-8") as ass_file:
-            ass_file.write(get_ass_header(protobuf.mediaPod.preset))
+            ass_file.write(get_ass_header(protobuf.mediaPod.configuration))
 
             srt_content = srt_file.read().strip()
             srt_blocks = re.split(r"\n\s*\n", srt_content)
@@ -97,7 +97,7 @@ def split_lines(text, max_words=4):
     mid = len(words) // 2 if len(words) > max_words else len(words)
     return " ".join(words[:mid]) + r"\N" + " ".join(words[mid:]) if len(words) > max_words else text
 
-def get_ass_header(preset: Preset):
+def get_ass_header(configuration: Configuration):
     return f"""
 [Script Info]
 ScriptType: v4.00+
@@ -107,16 +107,16 @@ ScaledBorderAndShadow: yes
 
 [V4+ Styles]
 Format: Name,Fontname, Fontsize,PrimaryColour, SecondaryColour,OutlineColour, BackColour, Bold, Italic, Underline,StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
-Style: Default, {get_subtitle_font(preset.subtitleFont)},{preset.subtitleSize}, {convert_color(preset.subtitleColor)}, {convert_color(preset.subtitleColor)}, {convert_color(preset.subtitleOutlineColor)},&H00000000, {preset.subtitleBold}, {preset.subtitleItalic},{preset.subtitleUnderline}, 0, 100, 100, 0, 0,1, {preset.subtitleOutlineThickness}, {1 if preset.subtitleShadow != "NONE" else 0},2,10,10,10,0
+Style: Default, {get_subtitle_font(configuration.subtitleFont)},{configuration.subtitleSize}, {convert_color(configuration.subtitleColor)}, {convert_color(configuration.subtitleColor)}, {convert_color(configuration.subtitleOutlineColor)},&H00000000, {configuration.subtitleBold}, {configuration.subtitleItalic},{configuration.subtitleUnderline}, 0, 100, 100, 0, 0,1, {configuration.subtitleOutlineThickness}, {1 if configuration.subtitleShadow != "NONE" else 0},2,10,10,10,0
 
 [Events]
 Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
 """
 
 def get_subtitle_font(subtitleFont: str) -> str :
-    if (subtitleFont == PresetSubtitleFont.Name(PresetSubtitleFont.TIMES_NEW_ROMAN)):
+    if (subtitleFont == ConfigurationSubtitleFont.Name(ConfigurationSubtitleFont.TIMES_NEW_ROMAN)):
         return 'Times New Roman'
-    if (subtitleFont == PresetSubtitleFont.Name(PresetSubtitleFont.COURIER_NEW)):
+    if (subtitleFont == ConfigurationSubtitleFont.Name(ConfigurationSubtitleFont.COURIER_NEW)):
         return 'Courier New'
     return 'Arial'
 
